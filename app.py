@@ -68,11 +68,12 @@ if st.button("Find GIS Portal"):
                 if portal:
                     st.markdown(f"[{portal['name']}]({portal['url']})")
                 else:
-                    search_query = full_address.replace(" ", "+")
-                    google_search = f"https://www.google.com/search?q={search_query}+parcel+GIS"
+                    fallback_query = f"{detected_county} {detected_state} GIS parcel viewer"
+                    search_query = fallback_query.replace(" ", "+")
+                    google_search = f"https://www.google.com/search?q={search_query}"
                     st.warning("No direct GIS portal saved yet for this county/state.")
-                    st.markdown(f"[Fallback GIS Search]({google_search})")
-
+                    st.markdown(f"[Search for {detected_county} GIS Portal]({google_search})")
+                    
             else:
                 st.warning("No address result found. Try simplifying the address.")
 
