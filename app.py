@@ -60,9 +60,6 @@ if st.button("Find GIS Portal"):
                     (gis_df["state"] == state_key)
                 ]
 
-                st.write("DEBUG county:", county_key)
-                st.write("DEBUG state:", state_key)
-                st.write("DEBUG GIS DataFrame:", gis_df)
                 st.subheader("Project Intake")
                 st.write(f"Project Type: {project_type}")
                 st.write(f"Entered Address: {full_address}")
