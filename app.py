@@ -2,6 +2,8 @@ import pandas as pd
 import streamlit as st
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+from ddgs import DDGS
+
 
 def load_gis_portals():
     try:
@@ -11,6 +13,22 @@ def load_gis_portals():
         return df
     except FileNotFoundError:
         return pd.DataFrame(columns=["county", "state", "gis_name", "gis_url"])
+
+
+def search_gis_candidates(county, state):
+    query = f"{county} {state} official GIS parcel viewer"
+    results = []
+
+    try:
+        with DDGS() as ddgs:
+            search_results = ddgs.text(query, max_results=3)
+            for result in search_results:
+                results.append(result)
+    except Exception:
+        pass
+
+    return results
+
 
 st.set_page_config(page_title="GIS Intake Assistant", layout="wide")
 
@@ -60,27 +78,27 @@ if st.button("Find GIS Portal"):
                     (gis_df["state"] == state_key)
                 ]
 
-                st.subheader("Project Intake")
-                st.write(f"Project Type: {project_type}")
-                st.write(f"Entered Address: {full_address}")
-
-                st.subheader("Confirmed Location")
-                st.write(location.address)
-
                 st.subheader("Detected Area")
                 st.write(f"County: {detected_county}")
                 st.write(f"State: {detected_state}")
 
                 st.subheader("GIS Portal")
+
                 if not match.empty:
                     portal = match.iloc[0]
                     st.markdown(f"[{portal['gis_name']}]({portal['gis_url']})")
                 else:
-                    fallback_query = f"{detected_county} {detected_state} GIS parcel viewer"
-                    search_query = fallback_query.replace(" ", "+")
-                    google_search = f"https://www.google.com/search?q={search_query}"
-                    st.warning("No direct GIS portal saved yet for this county/state.")
-                    st.markdown(f"[Search for {detected_county} GIS Portal]({google_search})")
+                    st.warning("No saved GIS portal found. Searching web...")
+                    candidates = search_gis_candidates(detected_county, detected_state)
+
+                    if candidates:
+                        for i, result in enumerate(candidates, 1):
+                            st.markdown(f"**{i}. [{result['title']}]({result['href']})**")
+                    else:
+                        fallback_query = f"{detected_county} {detected_state} GIS parcel viewer"
+                        search_query = fallback_query.replace(" ", "+")
+                        google_search = f"https://www.google.com/search?q={search_query}"
+                        st.markdown(f"[Fallback GIS Search]({google_search})")
 
             else:
                 st.warning("No address result found. Try simplifying the address.")
