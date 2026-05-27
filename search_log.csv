@@ -1,0 +1,26 @@
+timestamp,entered_address,confirmed_address,detected_county,detected_state,result_type,saved_gis_match,suggested_results_count,saved_source_count
+2026-05-27T08:33:09,"382 Rodell Drive, Grand Junction, Colorado","382, Rodell Drive, Grand Junction, Mesa County, Colorado, 81507, United States",Mesa County,Colorado,saved_gis_match,True,0,
+2026-05-27T08:36:14,"6737 Blarwood Drive, Austin, Texas","6737, Blarwood Drive, Blarwood Forest, Austin, Travis County, Texas, 78715, United States",Travis County,Texas,suggested_results,False,3,
+2026-05-27T08:47:57,"382 Rodell Drive, Grand Junction, Colorado","382, Rodell Drive, Grand Junction, Mesa County, Colorado, 81507, United States",Mesa County,Colorado,saved_sources_match,,0,2.0
+2026-05-27T08:50:09,"382 Rodell Drive, Grand Junction, Colorado","382, Rodell Drive, Grand Junction, Mesa County, Colorado, 81507, United States",Mesa County,Colorado,saved_sources_match,,0,1.0
+2026-05-27T08:52:44,"382 Rodell Drive, Grand Junction, Colorado","382, Rodell Drive, Grand Junction, Mesa County, Colorado, 81507, United States",Mesa County,Colorado,saved_sources_match,,0,2.0
+2026-05-27T08:58:07,"382 Rodell Drive, Grand Junction, Colorado","382, Rodell Drive, Grand Junction, Mesa County, Colorado, 81507, United States",Mesa County,Colorado,saved_sources_match,,0,1.0
+2026-05-27T08:58:44,"2749 Gilmer Ave, Tallassee, Alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,suggested_results,,3,0.0
+2026-05-27T09:02:29,"6737 Blarwood Drive, Austin, Texas","6737, Blarwood Drive, Blarwood Forest, Austin, Travis County, Texas, 78715, United States",Travis County,Texas,suggested_results,,3,0.0
+2026-05-27T09:04:54,"1228 Rood Avenue, Grand Junction, Colorado","1228, Rood Avenue, Original Mile Keith's Addition City Historic District, Grand Junction, Mesa County, Colorado, 81501, United States",Mesa County,Colorado,saved_sources_match,,0,1.0
+2026-05-27T09:10:30,"1228 Rood Avenue, Grand Junction, Colorado","1228, Rood Avenue, Original Mile Keith's Addition City Historic District, Grand Junction, Mesa County, Colorado, 81501, United States",Mesa County,Colorado,completed_lookup,,3,1.0
+2026-05-27T09:14:59,"1228 Rood Avenue, Grand Junction, Colorado","1228, Rood Avenue, Original Mile Keith's Addition City Historic District, Grand Junction, Mesa County, Colorado, 81501, United States",Mesa County,Colorado,completed_lookup,,3,1.0
+2026-05-27T09:18:36,"295 N LAWRENCE AVE, swansea, south carolina","295, North Lawrence Avenue, Swansea, Lexington County, South Carolina, 29160, United States",Lexington County,South Carolina,completed_lookup,,6,0.0
+2026-05-27T10:22:09,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,6,0.0
+2026-05-27T10:22:50,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,5,0.0
+2026-05-27T10:23:22,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,5,0.0
+2026-05-27T10:28:32,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,3,0.0
+2026-05-27T10:30:20,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,3,1.0
+2026-05-27T10:31:00,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,2,1.0
+2026-05-27T10:31:25,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,2,1.0
+2026-05-27T10:31:29,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,2,1.0
+2026-05-27T10:31:35,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,3,1.0
+2026-05-27T10:36:20,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,3,1.0
+2026-05-27T10:36:39,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,3,1.0
+2026-05-27T10:37:03,"2749 gilmer ave, tallassee, alabama","2749, Gilmer Avenue, Hornsbytown, Tallassee, Elmore County, Alabama, 36078, United States",Elmore County,Alabama,completed_lookup,,0,2.0
+2026-05-27T10:42:16,"6193 South Newport Street, Centennial, Colorado","6193, South Newport Street, Palos Verdes, Centennial, Arapahoe County, Colorado, 80111, United States",Arapahoe County,Colorado,completed_lookup,,6,0.0

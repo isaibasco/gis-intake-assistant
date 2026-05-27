@@ -1,3 +1,5 @@
-county,state,gis_name,gis_url,assessor_url,notes,last_verified
-mesa county,colorado,Mesa County GIS Viewer,https://emap.mesacounty.us/viewer/,,,2026-05-21
-mesa,colorado,Mesa County GIS Viewer,https://emap.mesacounty.us/viewer/,,,2026-05-21
+county,state,source_type,source_name,source_url,notes,last_verified
+mesa county,colorado,parcel_gis,Mesa County GIS Viewer,https://emap.mesacounty.us/viewer/,Main parcel GIS source,2026-05-27
+mesa,colorado,parcel_gis,Mesa County GIS Viewer,https://emap.mesacounty.us/viewer/,Main parcel GIS source,2026-05-27
+elmore county,alabama,parcel_gis,Elmore County Parcel Viewer,https://isv.kcsgis.com/al.elmore_revenue/,,2026-05-27
+elmore county,alabama,zoning_map,Zoning_Map_E_Upd20-Tabloid6-25-2020.pdf,https://www.tallasseeal.gov/wp-content/uploads/2020/08/Zoning_Map_E_Upd20-Tabloid6-25-2020.pdf,,2026-05-27
