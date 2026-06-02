@@ -2,3 +2,5 @@ streamlit
 geopy
 pandas
 ddgs
+gspread
+google-auth

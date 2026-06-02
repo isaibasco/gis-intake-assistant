@@ -226,101 +226,6 @@ def search_zoning_sources(city, county, state):
     return results
 
 
-def search_setback_sources(city, county, state):
-    queries = [
-        f'"{city}" "{state}" zoning ordinance',
-        f'"{city}" "{state}" development code',
-        f'"{city}" "{state}" land development code',
-        f'"{city}" "{state}" setback requirements',
-        f'"{county}" "{state}" zoning ordinance',
-    ]
-
-    results = []
-    seen_urls = set()
-
-    try:
-        with DDGS() as ddgs:
-            for query in queries:
-                search_results = ddgs.text(query, max_results=15)
-
-                for result in search_results:
-                    if is_bad_result(result):
-                        continue
-
-                    if not result_matches_place(result, city, county, state):
-                        continue
-
-                    href = result.get("href", "").lower()
-                    title = result.get("title", "").lower()
-                    body = result.get("body", "").lower()
-                    combined_text = f"{title} {href} {body}"
-
-                    if not href or href in seen_urls:
-                        continue
-
-                    has_code_signal = any(term in combined_text for term in [
-                        "zoning ordinance",
-                        "zoning code",
-                        "development code",
-                        "land development code",
-                        "municipal code",
-                        "code of ordinances",
-                        "setback",
-                        "setbacks",
-                        "yard requirements",
-                        "minimum yard",
-                    ])
-
-                    is_official_or_code_source = any(term in href for term in [
-                        ".gov",
-                        "municode",
-                        "ecode360",
-                        "codelibrary",
-                        "amlegal",
-                        "library.municode",
-                        "citycode",
-                        "planning",
-                    ])
-
-                    is_bad_source = any(term in href for term in [
-                        ".doc",
-                        ".docx",
-                        "legalmatch",
-                        "wikipedia",
-                        "wikidata",
-                        "facebook",
-                        "reddit",
-                        "linkedin",
-                        "youtube",
-                        "zillow",
-                        "realtor.com",
-                        "redfin",
-                        "homes.com",
-                        "news",
-                        "blog",
-                    ])
-
-                    if not has_code_signal:
-                        continue
-
-                    if not is_official_or_code_source:
-                        continue
-
-                    if is_bad_source:
-                        continue
-
-                    results.append(result)
-                    seen_urls.add(href)
-
-                    if len(results) == 3:
-                        return results
-
-    except Exception:
-        pass
-
-    return results
-
-
 def remove_saved_duplicates(candidates, match):
     if match.empty:
         return candidates
@@ -373,7 +278,6 @@ def display_saved_sources(match):
         "zoning_map": "Zoning Map",
         "assessor": "Assessor / Property Search",
         "zoning_ordinance": "Zoning Ordinance / Code",
-        "setback_reference": "Setback Reference",
         "other": "Other Source",
     }
 
@@ -444,7 +348,7 @@ def render_save_source_form(detected_county, detected_state):
         with st.form("save_verified_source_form", clear_on_submit=True):
             source_type = st.selectbox(
                 "Source Type",
-                ["parcel_gis", "zoning_map", "assessor", "zoning_ordinance", "setback_reference", "other"],
+                ["parcel_gis", "zoning_map", "assessor", "zoning_ordinance", "other"],
             )
 
             source_name = st.text_input(
@@ -651,14 +555,11 @@ with left_col:
                     with st.spinner("Checking saved sources and discovering additional sources..."):
                         general_candidates = search_general_sources(city, detected_county, detected_state)
                         zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
-                        setback_candidates = search_setback_sources(city, detected_county, detected_state)
-
                         general_candidates = remove_saved_duplicates(general_candidates, match)
                         zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
-                        setback_candidates = remove_saved_duplicates(setback_candidates, match)
 
                     saved_count = len(match) if not match.empty else 0
-                    suggested_count = len(general_candidates) + len(zoning_candidates) + len(setback_candidates)
+                    suggested_count = len(general_candidates) + len(zoning_candidates)
 
                     st.session_state.lookup_result = {
                         "full_address": full_address,
@@ -668,7 +569,6 @@ with left_col:
                         "match": match,
                         "general_candidates": general_candidates,
                         "zoning_candidates": zoning_candidates,
-                        "setback_candidates": setback_candidates,
                         "saved_count": saved_count,
                         "suggested_count": suggested_count,
                     }
@@ -716,8 +616,6 @@ with left_col:
             google_search = f"https://www.google.com/search?q={search_query}"
             st.markdown(f"[Fallback GIS Search]({google_search})")
 
-        st.markdown("<div style='margin-top: 1.4rem;'></div>", unsafe_allow_html=True)
-
         st.markdown("**Zoning Map Sources**")
         if result["zoning_candidates"]:
             display_candidates(result["zoning_candidates"])
@@ -726,17 +624,6 @@ with left_col:
             search_query = query.replace(" ", "+")
             google_search = f"https://www.google.com/search?q={search_query}"
             st.markdown(f"[Fallback Zoning Map Search]({google_search})")
-
-        st.markdown("<div style='margin-top: 1.4rem;'></div>", unsafe_allow_html=True)
-
-        st.markdown("**Zoning Ordinance / Setback Sources**")
-        if result["setback_candidates"]:
-            display_candidates(result["setback_candidates"])
-        else:
-            query = f"{result['detected_county']} {result['detected_state']} zoning ordinance setbacks"
-            search_query = query.replace(" ", "+")
-            google_search = f"https://www.google.com/search?q={search_query}"
-            st.markdown(f"[Fallback Setback Search]({google_search})")
 
         render_save_source_form(result["detected_county"], result["detected_state"])
 
