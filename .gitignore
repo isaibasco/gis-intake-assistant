@@ -1,4 +1,15 @@
+# Streamlit secrets
 .streamlit/secrets.toml
-*.json
+
+# Environment files
 .env
 .env.local
+
+# Google credentials
+credentials.json
+service_account.json
+*.pem
+
+# Python
+__pycache__/
+*.pyc
