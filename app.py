@@ -3,7 +3,7 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited, GeocoderServiceError
 from ddgs import DDGS
 from datetime import datetime
 
@@ -16,6 +16,29 @@ SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
 ]
+
+
+# -----------------------------
+# Geocoding
+# -----------------------------
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def geocode_address(full_address):
+    """Geocode an address and cache the result for one day.
+
+    Nominatim can rate-limit repeated requests. Caching prevents repeated
+    lookups of the same address during testing, reruns, and form interactions.
+    """
+    geolocator = Nominatim(user_agent="gis_intake_assistant_ed")
+    location = geolocator.geocode(full_address, addressdetails=True, timeout=10)
+
+    if not location:
+        return None
+
+    return {
+        "address": location.address,
+        "raw": location.raw,
+    }
 
 
 # -----------------------------
@@ -627,15 +650,13 @@ with left_col:
             st.error("Please enter the project address, city, and state.")
             st.session_state.lookup_result = None
         else:
-            geolocator = Nominatim(user_agent="gis_intake_assistant")
-
             try:
                 with st.spinner("Searching public location data..."):
-                    location = geolocator.geocode(full_address, addressdetails=True, timeout=10)
+                    location = geocode_address(full_address)
 
                 if location:
-                    confirmed_address = location.address
-                    address_data = location.raw.get("address", {})
+                    confirmed_address = location["address"]
+                    address_data = location["raw"].get("address", {})
                     detected_county = address_data.get("county", "")
                     detected_state = address_data.get("state", "")
 
@@ -687,8 +708,15 @@ with left_col:
                     st.warning("No address result found. Try simplifying the address.")
                     st.session_state.lookup_result = None
 
-            except (GeocoderTimedOut, GeocoderUnavailable):
-                st.error("The address lookup service timed out. Try again.")
+            except GeocoderRateLimited:
+                st.error(
+                    "The public address lookup service is rate-limiting requests. "
+                    "Wait a minute, then try again. If this keeps happening, we should add a backup geocoder."
+                )
+                st.session_state.lookup_result = None
+
+            except (GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError):
+                st.error("The address lookup service is temporarily unavailable or timed out. Try again.")
                 st.session_state.lookup_result = None
 
 
