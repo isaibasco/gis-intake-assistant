@@ -3,7 +3,7 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited, GeocoderServiceError
 from ddgs import DDGS
 from datetime import datetime
 
@@ -25,8 +25,8 @@ SCOPES = [
 def get_google_client():
     service_account_info = dict(st.secrets["gcp_service_account"])
 
-    # Streamlit Secrets may store the private key with escaped newlines.
-    # Google auth needs actual newline characters for the PEM key.
+    # Streamlit secrets may store private_key with literal "\\n" characters.
+    # Normalize them so Google auth can read the PEM key reliably.
     if "private_key" in service_account_info:
         service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
 
@@ -637,65 +637,90 @@ with left_col:
             geolocator = Nominatim(user_agent="gis_intake_assistant")
 
             try:
-                with st.spinner("Searching public location data..."):
-                    location = geolocator.geocode(full_address, addressdetails=True, timeout=10)
+                location = None
+                geocoder_fallback = False
+
+                try:
+                    with st.spinner("Searching public location data..."):
+                        location = geolocator.geocode(full_address, addressdetails=True, timeout=10)
+
+                except GeocoderRateLimited:
+                    geocoder_fallback = True
+                    st.warning(
+                        "The public address lookup service is rate-limiting requests. "
+                        "Continuing with city/state only."
+                    )
+
+                except (GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError):
+                    geocoder_fallback = True
+                    st.warning(
+                        "The public address lookup service is temporarily unavailable. "
+                        "Continuing with city/state only."
+                    )
 
                 if location:
                     confirmed_address = location.address
                     address_data = location.raw.get("address", {})
                     detected_county = address_data.get("county", "")
-                    detected_state = address_data.get("state", "")
+                    detected_state = address_data.get("state", state)
+                else:
+                    geocoder_fallback = True
+                    confirmed_address = full_address
+                    detected_county = ""
+                    detected_state = state
 
-                    county_key = detected_county.strip().lower()
-                    state_key = detected_state.strip().lower()
+                    if not geocoder_fallback:
+                        st.warning("No exact address result found. Continuing with city/state only.")
 
-                    gis_df = load_gis_portals()
+                county_key = detected_county.strip().lower()
+                state_key = detected_state.strip().lower()
+
+                gis_df = load_gis_portals()
+                if county_key:
                     match = gis_df[
                         (gis_df["county"] == county_key)
                         & (gis_df["state"] == state_key)
                     ]
-
-                    with st.spinner("Checking saved sources and discovering additional sources..."):
-                        general_candidates = search_general_sources(city, detected_county, detected_state)
-                        zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
-                        setback_candidates = search_setback_sources(city, detected_county, detected_state)
-
-                        general_candidates = remove_saved_duplicates(general_candidates, match)
-                        zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
-                        setback_candidates = remove_saved_duplicates(setback_candidates, match)
-
-                    saved_count = len(match) if not match.empty else 0
-                    suggested_count = len(general_candidates) + len(zoning_candidates) + len(setback_candidates)
-
-                    st.session_state.lookup_result = {
-                        "full_address": full_address,
-                        "confirmed_address": confirmed_address,
-                        "detected_county": detected_county,
-                        "detected_state": detected_state,
-                        "match": match,
-                        "general_candidates": general_candidates,
-                        "zoning_candidates": zoning_candidates,
-                        "setback_candidates": setback_candidates,
-                        "saved_count": saved_count,
-                        "suggested_count": suggested_count,
-                    }
-
-                    log_search(
-                        entered_address=full_address,
-                        confirmed_address=confirmed_address,
-                        detected_county=detected_county,
-                        detected_state=detected_state,
-                        result_type="completed_lookup",
-                        saved_source_count=saved_count,
-                        suggested_results_count=suggested_count,
-                    )
-
                 else:
-                    st.warning("No address result found. Try simplifying the address.")
-                    st.session_state.lookup_result = None
+                    match = pd.DataFrame(columns=gis_df.columns)
 
-            except (GeocoderTimedOut, GeocoderUnavailable):
-                st.error("The address lookup service timed out. Try again.")
+                with st.spinner("Checking saved sources and discovering additional sources..."):
+                    general_candidates = search_general_sources(city, detected_county, detected_state)
+                    zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
+                    setback_candidates = search_setback_sources(city, detected_county, detected_state)
+
+                    general_candidates = remove_saved_duplicates(general_candidates, match)
+                    zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
+                    setback_candidates = remove_saved_duplicates(setback_candidates, match)
+
+                saved_count = len(match) if not match.empty else 0
+                suggested_count = len(general_candidates) + len(zoning_candidates) + len(setback_candidates)
+
+                st.session_state.lookup_result = {
+                    "full_address": full_address,
+                    "confirmed_address": confirmed_address,
+                    "detected_county": detected_county,
+                    "detected_state": detected_state,
+                    "match": match,
+                    "general_candidates": general_candidates,
+                    "zoning_candidates": zoning_candidates,
+                    "setback_candidates": setback_candidates,
+                    "saved_count": saved_count,
+                    "suggested_count": suggested_count,
+                }
+
+                log_search(
+                    entered_address=full_address,
+                    confirmed_address=confirmed_address,
+                    detected_county=detected_county,
+                    detected_state=detected_state,
+                    result_type="completed_lookup_city_state_fallback" if geocoder_fallback else "completed_lookup",
+                    saved_source_count=saved_count,
+                    suggested_results_count=suggested_count,
+                )
+
+            except Exception as error:
+                st.error(f"Lookup failed: {error}")
                 st.session_state.lookup_result = None
 
 
