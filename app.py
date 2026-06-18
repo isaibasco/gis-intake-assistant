@@ -3,7 +3,7 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited, GeocoderServiceError
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 from ddgs import DDGS
 from datetime import datetime
 
@@ -23,8 +23,15 @@ SCOPES = [
 # -----------------------------
 
 def get_google_client():
+    service_account_info = dict(st.secrets["gcp_service_account"])
+
+    # Streamlit Secrets may store the private key with escaped newlines.
+    # Google auth needs actual newline characters for the PEM key.
+    if "private_key" in service_account_info:
+        service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+
     creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"],
+        service_account_info,
         scopes=SCOPES,
     )
     return gspread.authorize(creds)
@@ -34,21 +41,6 @@ def get_worksheet(tab_name):
     client = get_google_client()
     sheet = client.open(SHEET_NAME)
     return sheet.worksheet(tab_name)
-
-
-# -----------------------------
-# Address geocoding
-# -----------------------------
-
-@st.cache_data(ttl=86400, show_spinner=False)
-def geocode_full_address(full_address):
-    geolocator = Nominatim(user_agent="gis_intake_assistant")
-    location = geolocator.geocode(full_address, addressdetails=True, timeout=10)
-
-    if not location:
-        return None, {}
-
-    return location.address, location.raw.get("address", {})
 
 
 # -----------------------------
@@ -642,72 +634,69 @@ with left_col:
             st.error("Please enter the project address, city, and state.")
             st.session_state.lookup_result = None
         else:
-            confirmed_address = full_address
-            detected_county = ""
-            detected_state = state.strip()
-            geocode_status = "city_state_fallback"
+            geolocator = Nominatim(user_agent="gis_intake_assistant")
 
             try:
                 with st.spinner("Searching public location data..."):
-                    geocoded_address, address_data = geocode_full_address(full_address)
+                    location = geolocator.geocode(full_address, addressdetails=True, timeout=10)
 
-                if geocoded_address:
-                    confirmed_address = geocoded_address
+                if location:
+                    confirmed_address = location.address
+                    address_data = location.raw.get("address", {})
                     detected_county = address_data.get("county", "")
-                    detected_state = address_data.get("state", state.strip())
-                    geocode_status = "completed_lookup"
+                    detected_state = address_data.get("state", "")
+
+                    county_key = detected_county.strip().lower()
+                    state_key = detected_state.strip().lower()
+
+                    gis_df = load_gis_portals()
+                    match = gis_df[
+                        (gis_df["county"] == county_key)
+                        & (gis_df["state"] == state_key)
+                    ]
+
+                    with st.spinner("Checking saved sources and discovering additional sources..."):
+                        general_candidates = search_general_sources(city, detected_county, detected_state)
+                        zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
+                        setback_candidates = search_setback_sources(city, detected_county, detected_state)
+
+                        general_candidates = remove_saved_duplicates(general_candidates, match)
+                        zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
+                        setback_candidates = remove_saved_duplicates(setback_candidates, match)
+
+                    saved_count = len(match) if not match.empty else 0
+                    suggested_count = len(general_candidates) + len(zoning_candidates) + len(setback_candidates)
+
+                    st.session_state.lookup_result = {
+                        "full_address": full_address,
+                        "confirmed_address": confirmed_address,
+                        "detected_county": detected_county,
+                        "detected_state": detected_state,
+                        "match": match,
+                        "general_candidates": general_candidates,
+                        "zoning_candidates": zoning_candidates,
+                        "setback_candidates": setback_candidates,
+                        "saved_count": saved_count,
+                        "suggested_count": suggested_count,
+                    }
+
+                    log_search(
+                        entered_address=full_address,
+                        confirmed_address=confirmed_address,
+                        detected_county=detected_county,
+                        detected_state=detected_state,
+                        result_type="completed_lookup",
+                        saved_source_count=saved_count,
+                        suggested_results_count=suggested_count,
+                    )
+
                 else:
-                    st.warning("No address result found. Continuing with city/state only.")
+                    st.warning("No address result found. Try simplifying the address.")
+                    st.session_state.lookup_result = None
 
-            except GeocoderRateLimited:
-                st.warning("The public address lookup service is rate-limiting requests. Continuing with city/state only.")
-
-            except (GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError):
-                st.warning("The public address lookup service is unavailable. Continuing with city/state only.")
-
-            county_key = detected_county.strip().lower()
-            state_key = detected_state.strip().lower()
-
-            gis_df = load_gis_portals()
-            match = gis_df[
-                (gis_df["county"] == county_key)
-                & (gis_df["state"] == state_key)
-            ]
-
-            with st.spinner("Checking saved sources and discovering additional sources..."):
-                general_candidates = search_general_sources(city, detected_county, detected_state)
-                zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
-                setback_candidates = search_setback_sources(city, detected_county, detected_state)
-
-                general_candidates = remove_saved_duplicates(general_candidates, match)
-                zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
-                setback_candidates = remove_saved_duplicates(setback_candidates, match)
-
-            saved_count = len(match) if not match.empty else 0
-            suggested_count = len(general_candidates) + len(zoning_candidates) + len(setback_candidates)
-
-            st.session_state.lookup_result = {
-                "full_address": full_address,
-                "confirmed_address": confirmed_address,
-                "detected_county": detected_county,
-                "detected_state": detected_state,
-                "match": match,
-                "general_candidates": general_candidates,
-                "zoning_candidates": zoning_candidates,
-                "setback_candidates": setback_candidates,
-                "saved_count": saved_count,
-                "suggested_count": suggested_count,
-            }
-
-            log_search(
-                entered_address=full_address,
-                confirmed_address=confirmed_address,
-                detected_county=detected_county,
-                detected_state=detected_state,
-                result_type=geocode_status,
-                saved_source_count=saved_count,
-                suggested_results_count=suggested_count,
-            )
+            except (GeocoderTimedOut, GeocoderUnavailable):
+                st.error("The address lookup service timed out. Try again.")
+                st.session_state.lookup_result = None
 
 
 result = st.session_state.lookup_result
