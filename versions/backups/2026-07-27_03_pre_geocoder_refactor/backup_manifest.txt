@@ -1,0 +1,18 @@
+Backup purpose: Snapshot before extracting geocoder behavior from app.py
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Base Git commit: 53aeda6163782e0c49f063e8ed7ccf64c738c0bd
+
+app.py
+SHA256: 670E071E8734100F6AE3C5FF05E87C67D5FFEC7B525D6E0720F91728FC8BAF98
+
+modules/__init__.py
+SHA256: 5866A9BC3561ED4511DE7D1C4C5AF1E128DE7A6487F107CEFC28AAADBB36618F
+
+modules/config.py
+SHA256: 5FF7235F36B97412EB8A31D2C7CBC3281282B8F092FBA5423051A2382A439212
+
+modules/google_sheets.py
+SHA256: 7425B372E6B15862270909D9A1721CD79D3673231F54A2D6DB7C3E8658CB8920
+
+Existing unrelated working-tree changes were preserved and are not part of this backup.

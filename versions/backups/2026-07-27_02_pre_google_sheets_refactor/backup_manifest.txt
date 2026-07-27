@@ -1,0 +1,15 @@
+Backup purpose: Snapshot before extracting Google Sheets operations from app.py
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Base Git commit: 53aeda6163782e0c49f063e8ed7ccf64c738c0bd
+
+app.py
+SHA256: BE9EFBB02276BEB06FF4AAA3E78A0418F18A7142E56DC5DFB3888669BAB57C23
+
+modules/__init__.py
+SHA256: 5866A9BC3561ED4511DE7D1C4C5AF1E128DE7A6487F107CEFC28AAADBB36618F
+
+modules/config.py
+SHA256: 5FF7235F36B97412EB8A31D2C7CBC3281282B8F092FBA5423051A2382A439212
+
+Existing unrelated working-tree changes were preserved and are not part of this backup.

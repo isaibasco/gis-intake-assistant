@@ -1,0 +1,9 @@
+Backup purpose: Baseline before extracting configuration from app.py
+Created: 2026-07-27
+Git branch at backup: main
+Git commit: 53aeda6163782e0c49f063e8ed7ccf64c738c0bd
+Source file: app.py
+Backup file: versions/backups/2026-07-27_01_pre_config_refactor/app.py
+SHA256: D5D8A93DC5D5B33AC97B46E5CB9616C2A168840F6A71BED85103766A791EAFD6
+
+Existing unrelated working-tree changes were preserved and are not part of this backup.
