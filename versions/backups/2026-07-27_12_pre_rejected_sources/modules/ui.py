@@ -1,6 +1,5 @@
 """Streamlit styling and reusable UI helpers."""
 
-import hashlib
 import html
 import json
 
@@ -8,7 +7,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from modules.config import SOURCE_TYPES
-from modules.google_sheets import save_rejected_source, save_verified_source
+from modules.google_sheets import save_verified_source
 from modules.source_names import suggest_source_name
 
 
@@ -166,80 +165,15 @@ def display_saved_sources(match):
     return displayed_count
 
 
-def _mark_candidate_not_useful(
-    href,
-    title,
-    county,
-    state,
-    source_type,
-    full_address,
-):
-    saved, message = save_rejected_source(
-        county=county,
-        state=state,
-        source_type=source_type,
-        source_name=title,
-        source_url=href,
-        full_address=full_address,
-    )
-
-    if saved:
-        lookup_result = st.session_state.get("lookup_result")
-        if lookup_result:
-            for candidate_group in (
-                "general_candidates",
-                "zoning_candidates",
-                "setback_candidates",
-            ):
-                lookup_result[candidate_group] = [
-                    candidate
-                    for candidate in lookup_result.get(candidate_group, [])
-                    if candidate.get("href", "").strip() != href.strip()
-                ]
-
-        st.session_state["candidate_feedback"] = ("success", message)
-    else:
-        st.session_state["candidate_feedback"] = ("warning", message)
-
-
-def display_candidate_feedback():
-    feedback = st.session_state.pop("candidate_feedback", None)
-    if feedback:
-        feedback_type, message = feedback
-        getattr(st, feedback_type)(message)
-
-
-def display_candidates(candidates, county, state, source_type, full_address):
+def display_candidates(candidates):
     if candidates:
         for i, candidate in enumerate(candidates, 1):
             title = candidate.get("title", "Untitled result")
-            href = candidate.get("href", "").strip()
-            safe_title = html.escape(title)
-            safe_href = html.escape(href, quote=True)
-            button_key = hashlib.sha256(
-                f"{source_type}|{href}".encode("utf-8")
-            ).hexdigest()[:16]
-
-            link_column, action_column = st.columns([0.76, 0.24], gap="small")
-            with link_column:
-                st.markdown(
-                    (
-                        f"<div class='candidate-link'>{i}. "
-                        f"<a href='{safe_href}' target='_blank'>{safe_title}</a></div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
-            with action_column:
-                st.button(
-                    "Not useful",
-                    key=f"reject_candidate_{button_key}",
-                    help="Hide this URL whenever this same entered address is searched.",
-                    on_click=_mark_candidate_not_useful,
-                    args=(href, title, county, state, source_type, full_address),
-                    type="tertiary",
-                    icon=":material/thumb_down:",
-                    width="stretch",
-                )
+            href = candidate.get("href", "")
+            st.markdown(
+                f"<div class='candidate-link'>{i}. <a href='{href}' target='_blank'>{title}</a></div>",
+                unsafe_allow_html=True,
+            )
     else:
         st.caption("No high-confidence suggestions found. Use fallback search if needed.")
 
@@ -427,23 +361,6 @@ def apply_styles():
         div.stFormSubmitButton > button:hover {
             border-color: #ffb86b;
             color: #ffb86b;
-        }
-
-        div.stButton > button[kind="tertiary"],
-        button[data-testid="stBaseButton-tertiary"] {
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            background: transparent;
-            color: inherit;
-            padding: 0.25rem 0.45rem;
-            font-size: 0.75rem;
-            opacity: 0.78;
-        }
-
-        div.stButton > button[kind="tertiary"]:hover,
-        button[data-testid="stBaseButton-tertiary"]:hover {
-            border-color: #ff9b42;
-            color: #ffb86b;
-            opacity: 1;
         }
 
         .section-divider {

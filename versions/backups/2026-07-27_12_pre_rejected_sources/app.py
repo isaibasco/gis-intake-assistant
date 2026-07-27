@@ -6,12 +6,7 @@ from modules.config import (
     APP_TITLE,
 )
 from modules.geocoder import finalize_location_result, lookup_location
-from modules.google_sheets import (
-    filter_active_sources,
-    load_source_database,
-    log_search,
-    rejected_urls_for_address,
-)
+from modules.google_sheets import load_gis_portals, log_search
 from modules.search import (
     remove_saved_duplicates,
     search_general_sources,
@@ -20,7 +15,6 @@ from modules.search import (
 )
 from modules.ui import (
     apply_styles,
-    display_candidate_feedback,
     display_candidates,
     display_saved_sources,
     render_copyable_address,
@@ -36,12 +30,7 @@ def complete_lookup(full_address, city, location_result):
     county_key = detected_county.strip().lower()
     state_key = detected_state.strip().lower()
 
-    source_database = load_source_database()
-    gis_df = filter_active_sources(source_database)
-    rejected_urls = rejected_urls_for_address(
-        source_database,
-        full_address,
-    )
+    gis_df = load_gis_portals()
     if county_key:
         match = gis_df[
             (gis_df["county"] == county_key)
@@ -58,22 +47,6 @@ def complete_lookup(full_address, city, location_result):
         general_candidates = remove_saved_duplicates(general_candidates, match)
         zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
         setback_candidates = remove_saved_duplicates(setback_candidates, match)
-
-        general_candidates = [
-            candidate
-            for candidate in general_candidates
-            if candidate.get("href", "").strip() not in rejected_urls
-        ]
-        zoning_candidates = [
-            candidate
-            for candidate in zoning_candidates
-            if candidate.get("href", "").strip() not in rejected_urls
-        ]
-        setback_candidates = [
-            candidate
-            for candidate in setback_candidates
-            if candidate.get("href", "").strip() not in rejected_urls
-        ]
 
     saved_count = len(match) if not match.empty else 0
     suggested_count = (
@@ -207,17 +180,10 @@ with left_col:
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.subheader("Suggested Additional Sources")
         st.caption("Saved sources appear on the right. These are additional discovery results to review.")
-        display_candidate_feedback()
 
         st.markdown("**GIS / Parcel Sources**")
         if result["general_candidates"]:
-            display_candidates(
-                result["general_candidates"],
-                result["detected_county"],
-                result["detected_state"],
-                "parcel_gis",
-                result["full_address"],
-            )
+            display_candidates(result["general_candidates"])
         else:
             query = f"{result['detected_county']} {result['detected_state']} GIS parcel viewer"
             search_query = query.replace(" ", "+")
@@ -228,13 +194,7 @@ with left_col:
 
         st.markdown("**Zoning Map Sources**")
         if result["zoning_candidates"]:
-            display_candidates(
-                result["zoning_candidates"],
-                result["detected_county"],
-                result["detected_state"],
-                "zoning_map",
-                result["full_address"],
-            )
+            display_candidates(result["zoning_candidates"])
         else:
             query = f"{result['detected_county']} {result['detected_state']} zoning map PDF zoning viewer"
             search_query = query.replace(" ", "+")
@@ -245,13 +205,7 @@ with left_col:
 
         st.markdown("**Zoning Ordinance / Setback Sources**")
         if result["setback_candidates"]:
-            display_candidates(
-                result["setback_candidates"],
-                result["detected_county"],
-                result["detected_state"],
-                "zoning_ordinance",
-                result["full_address"],
-            )
+            display_candidates(result["setback_candidates"])
         else:
             query = f"{result['detected_county']} {result['detected_state']} zoning ordinance setbacks"
             search_query = query.replace(" ", "+")

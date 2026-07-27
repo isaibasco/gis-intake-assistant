@@ -1,0 +1,7 @@
+Backup purpose: Preserve the non-writing UI preview before adding rejected-source controls
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Git commit: 9aef90d
+
+tests/ui_preview.py
+SHA256: F2AAAFC8D3D77CC1C2CE36D4649F2F90A0A926A98E911DEC41469E0B9FBB27B9
