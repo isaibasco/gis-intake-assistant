@@ -5,6 +5,7 @@ import html
 import json
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from modules.config import SOURCE_TYPES
 from modules.google_sheets import save_rejected_source, save_verified_source
@@ -21,7 +22,7 @@ def render_copyable_address(address):
         .replace("&", "\\u0026")
     )
 
-    st.iframe(
+    components.html(
         f"""
         <style>
         html, body {{
@@ -110,7 +111,7 @@ def render_copyable_address(address):
         </script>
         """,
         height=54,
-        width="stretch",
+        scrolling=False,
     )
 
 

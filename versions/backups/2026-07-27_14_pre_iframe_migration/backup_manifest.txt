@@ -1,0 +1,10 @@
+Backup purpose: Preserve copy-component code before migrating to Streamlit 1.57 st.iframe
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Git commit: 83584c3
+
+modules/ui.py
+SHA256: 340D71502CE1F4C7B2AA1C30F213B9C04D11F910AFB1E395B6ADF94DFB478C10
+
+tests/test_ui.py
+SHA256: F7CABD5157E25CC405219DB1B161904A8EEA0FB3FBD011CC4F19D34EE3E33F72
