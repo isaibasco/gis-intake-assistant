@@ -39,16 +39,9 @@ def render_copyable_address(address):
             padding: 0.35rem 0.4rem 0.35rem 0.8rem;
             border: 1px solid rgba(255, 155, 66, 0.82);
             border-radius: 7px;
-            background: #f8f8fb;
-            color: #202124;
+            background: rgba(128, 128, 128, 0.08);
+            color: inherit;
             gap: 0.75rem;
-        }}
-
-        @media (prefers-color-scheme: dark) {{
-            .copy-row {{
-                background: #171820;
-                color: #f3f3f5;
-            }}
         }}
 
         .address {{
