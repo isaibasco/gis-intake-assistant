@@ -1,0 +1,7 @@
+Backup purpose: Preserve the first UI preview before making its Save action non-writing
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Git commit: 9b73352
+
+tests/ui_preview.py
+SHA256: 35DBA97AA569570645D8A65AE5C2A6417EE98EB3C104C690BDD4C74643769F74
