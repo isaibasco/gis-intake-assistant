@@ -10,7 +10,6 @@ from modules.google_sheets import (
     filter_active_sources,
     load_source_database,
     log_search,
-    rejected_sources_for_address,
     rejected_urls_for_address,
 )
 from modules.search import (
@@ -26,7 +25,6 @@ from modules.ui import (
     display_saved_sources,
     render_copyable_address,
     render_manual_county_form,
-    render_rejected_sources,
     render_save_source_form,
 )
 
@@ -40,10 +38,6 @@ def complete_lookup(full_address, city, location_result):
 
     source_database = load_source_database()
     gis_df = filter_active_sources(source_database)
-    rejected_sources = rejected_sources_for_address(
-        source_database,
-        full_address,
-    )
     rejected_urls = rejected_urls_for_address(
         source_database,
         full_address,
@@ -100,7 +94,6 @@ def complete_lookup(full_address, city, location_result):
         "general_candidates": general_candidates,
         "zoning_candidates": zoning_candidates,
         "setback_candidates": setback_candidates,
-        "rejected_sources": rejected_sources,
         "saved_count": saved_count,
         "suggested_count": suggested_count,
     }
@@ -265,10 +258,6 @@ with left_col:
             google_search = f"https://www.google.com/search?q={search_query}"
             st.markdown(f"[Fallback Setback Search]({google_search})")
 
-        render_rejected_sources(
-            result.get("rejected_sources", []),
-            result["full_address"],
-        )
         render_save_source_form(result["detected_county"], result["detected_state"])
 
 

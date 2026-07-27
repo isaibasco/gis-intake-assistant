@@ -7,11 +7,7 @@ import json
 import streamlit as st
 
 from modules.config import SOURCE_TYPES
-from modules.google_sheets import (
-    restore_rejected_source,
-    save_rejected_source,
-    save_verified_source,
-)
+from modules.google_sheets import save_rejected_source, save_verified_source
 from modules.source_names import suggest_source_name
 
 
@@ -200,55 +196,6 @@ def _mark_candidate_not_useful(
                     if candidate.get("href", "").strip() != href.strip()
                 ]
 
-            rejected_sources = lookup_result.setdefault("rejected_sources", [])
-            if not any(
-                source.get("source_url", "").strip() == href.strip()
-                for source in rejected_sources
-            ):
-                rejected_sources.append({
-                    "source_type": source_type,
-                    "source_name": title,
-                    "source_url": href,
-                })
-
-        st.session_state["candidate_feedback"] = ("success", message)
-    else:
-        st.session_state["candidate_feedback"] = ("warning", message)
-
-
-def _candidate_group_for_source_type(source_type):
-    return {
-        "parcel_gis": "general_candidates",
-        "assessor": "general_candidates",
-        "zoning_map": "zoning_candidates",
-        "zoning_ordinance": "setback_candidates",
-        "setback_reference": "setback_candidates",
-    }.get(source_type, "general_candidates")
-
-
-def _restore_not_useful_source(href, title, source_type, full_address):
-    restored, message = restore_rejected_source(
-        source_url=href,
-        full_address=full_address,
-    )
-
-    if restored:
-        lookup_result = st.session_state.get("lookup_result")
-        if lookup_result:
-            lookup_result["rejected_sources"] = [
-                source
-                for source in lookup_result.get("rejected_sources", [])
-                if source.get("source_url", "").strip() != href.strip()
-            ]
-
-            candidate_group = _candidate_group_for_source_type(source_type)
-            candidates = lookup_result.setdefault(candidate_group, [])
-            if not any(
-                candidate.get("href", "").strip() == href.strip()
-                for candidate in candidates
-            ):
-                candidates.append({"title": title, "href": href})
-
         st.session_state["candidate_feedback"] = ("success", message)
     else:
         st.session_state["candidate_feedback"] = ("warning", message)
@@ -294,56 +241,6 @@ def display_candidates(candidates, county, state, source_type, full_address):
                 )
     else:
         st.caption("No high-confidence suggestions found. Use fallback search if needed.")
-
-
-def render_rejected_sources(rejected_sources, full_address):
-    """Show address-scoped rejected links with a reversible restore action."""
-    if not rejected_sources:
-        return
-
-    with st.expander(
-        f"Not useful for this address ({len(rejected_sources)})",
-        expanded=False,
-    ):
-        st.caption(
-            "These links stay hidden only for this entered address. "
-            "Restore a link if you want it included again."
-        )
-
-        for source in rejected_sources:
-            title = str(source.get("source_name", "")).strip() or "Untitled result"
-            href = str(source.get("source_url", "")).strip()
-            source_type = str(source.get("source_type", "")).strip()
-            if not href:
-                continue
-
-            safe_title = html.escape(title)
-            safe_href = html.escape(href, quote=True)
-            button_key = hashlib.sha256(
-                f"{full_address}|{source_type}|{href}".encode("utf-8")
-            ).hexdigest()[:16]
-
-            link_column, action_column = st.columns([0.76, 0.24], gap="small")
-            with link_column:
-                st.markdown(
-                    (
-                        "<div class='candidate-link'>"
-                        f"<a href='{safe_href}' target='_blank'>{safe_title}</a>"
-                        "</div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
-            with action_column:
-                st.button(
-                    "Restore",
-                    key=f"restore_candidate_{button_key}",
-                    help="Allow this URL to appear again for this entered address.",
-                    on_click=_restore_not_useful_source,
-                    args=(href, title, source_type, full_address),
-                    type="tertiary",
-                    icon=":material/undo:",
-                    width="stretch",
-                )
 
 
 def render_manual_county_form(pending_lookup):

@@ -89,10 +89,6 @@ def rejected_sources_for_address(source_database, full_address):
         (source_database["notes"] == scope_note)
         & (source_database["status"] == "rejected")
     ].copy()
-    for column in ("source_type", "source_name"):
-        if column not in rejected.columns:
-            rejected[column] = ""
-
     rejected = rejected[rejected["source_url"].astype(str).str.strip() != ""]
     rejected = rejected.drop_duplicates(subset=["source_url"], keep="last")
 

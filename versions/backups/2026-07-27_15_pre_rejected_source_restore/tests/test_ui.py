@@ -61,14 +61,6 @@ class UiTests(unittest.TestCase):
         self.assertEqual(state["lookup_result"]["general_candidates"], [])
         self.assertEqual(state["lookup_result"]["zoning_candidates"], [])
         self.assertEqual(
-            state["lookup_result"]["rejected_sources"],
-            [{
-                "source_type": "parcel_gis",
-                "source_name": "Result",
-                "source_url": "https://example.gov/result",
-            }],
-        )
-        self.assertEqual(
             state["candidate_feedback"],
             ("success", "Marked not useful."),
         )
@@ -110,52 +102,6 @@ class UiTests(unittest.TestCase):
             full_address="123 Main St, Example, Colorado",
         )
         self.assertEqual(state["lookup_result"]["general_candidates"], [])
-
-    def test_restore_removes_rejection_and_returns_candidate_to_results(self):
-        state = {
-            "lookup_result": {
-                "general_candidates": [],
-                "zoning_candidates": [],
-                "setback_candidates": [],
-                "rejected_sources": [{
-                    "source_type": "zoning_map",
-                    "source_name": "Zoning Viewer",
-                    "source_url": "https://example.gov/zoning",
-                }],
-            }
-        }
-
-        with (
-            patch.object(ui.st, "session_state", state),
-            patch.object(
-                ui,
-                "restore_rejected_source",
-                return_value=(True, "Restored."),
-            ) as restore_rejected,
-        ):
-            ui._restore_not_useful_source(
-                "https://example.gov/zoning",
-                "Zoning Viewer",
-                "zoning_map",
-                "123 Main St, Example, Colorado",
-            )
-
-        restore_rejected.assert_called_once_with(
-            source_url="https://example.gov/zoning",
-            full_address="123 Main St, Example, Colorado",
-        )
-        self.assertEqual(state["lookup_result"]["rejected_sources"], [])
-        self.assertEqual(
-            state["lookup_result"]["zoning_candidates"],
-            [{
-                "title": "Zoning Viewer",
-                "href": "https://example.gov/zoning",
-            }],
-        )
-        self.assertEqual(
-            state["candidate_feedback"],
-            ("success", "Restored."),
-        )
 
 
 if __name__ == "__main__":

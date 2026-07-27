@@ -1,0 +1,4 @@
+Backup purpose: before making rejected-source display details tolerant of minimal data tables
+Base commit: 2a6f9916b9960533348b668e0bd0ddb3a8355804
+
+modules\google_sheets.py=D3EA46B3E33D0AA8774ABECBEB40BA948626C005CD84BE9DC63C1FBA9F07E803

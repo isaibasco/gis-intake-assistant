@@ -79,33 +79,16 @@ def _rejection_scope_note(full_address):
     return f"rejected_address:{normalized_address}"
 
 
-def rejected_sources_for_address(source_database, full_address):
-    """Return unique rejected source details for one normalized entered address."""
+def rejected_urls_for_address(source_database, full_address):
     scope_note = _rejection_scope_note(full_address)
     if scope_note == "rejected_address:":
-        return []
+        return set()
 
     rejected = source_database[
         (source_database["notes"] == scope_note)
         & (source_database["status"] == "rejected")
-    ].copy()
-    for column in ("source_type", "source_name"):
-        if column not in rejected.columns:
-            rejected[column] = ""
-
-    rejected = rejected[rejected["source_url"].astype(str).str.strip() != ""]
-    rejected = rejected.drop_duplicates(subset=["source_url"], keep="last")
-
-    return rejected[
-        ["source_type", "source_name", "source_url"]
-    ].to_dict("records")
-
-
-def rejected_urls_for_address(source_database, full_address):
-    return {
-        source["source_url"].strip()
-        for source in rejected_sources_for_address(source_database, full_address)
-    }
+    ]
+    return set(rejected["source_url"].astype(str).str.strip())
 
 
 def load_gis_portals():
@@ -193,37 +176,6 @@ def save_rejected_source(
         return True, "Marked not useful. This URL will stay hidden for this address."
     except Exception as error:
         return False, f"Could not mark this source as not useful: {error}"
-
-
-def restore_rejected_source(source_url, full_address):
-    """Restore one address-scoped rejection without deleting its history row."""
-    source_url_clean = source_url.strip()
-    scope_note = _rejection_scope_note(full_address)
-
-    if not source_url_clean or scope_note == "rejected_address:":
-        return False, "A source URL and entered address are required to restore this source."
-
-    try:
-        worksheet = get_worksheet(GIS_SOURCES_TAB)
-        records = worksheet.get_all_records()
-        headers = worksheet.row_values(1)
-        status_column = headers.index("status") + 1
-
-        for sheet_row, record in enumerate(records, start=2):
-            if (
-                str(record.get("source_url", "")).strip() == source_url_clean
-                and str(record.get("notes", "")).strip() == scope_note
-                and str(record.get("status", "")).strip().lower() == "rejected"
-            ):
-                worksheet.update_cell(sheet_row, status_column, "restored")
-                return (
-                    True,
-                    "Restored. This URL can appear again for this address.",
-                )
-
-        return False, "This source is no longer marked not useful for this address."
-    except Exception as error:
-        return False, f"Could not restore this source: {error}"
 
 
 def log_search(

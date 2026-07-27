@@ -18,12 +18,6 @@ class FakeWorksheet:
     def append_row(self, row, value_input_option):
         self.appended_rows.append((row, value_input_option))
 
-    def row_values(self, row_number):
-        return google_sheets.SOURCE_COLUMNS
-
-    def update_cell(self, row, column, value):
-        self.updated_cell = (row, column, value)
-
 
 class GoogleSheetsTests(unittest.TestCase):
     def test_google_client_normalizes_literal_private_key_newlines(self):
@@ -133,17 +127,6 @@ class GoogleSheetsTests(unittest.TestCase):
             ),
             set(),
         )
-        self.assertEqual(
-            google_sheets.rejected_sources_for_address(
-                source_database,
-                "123 Main St, Dandridge, Tennessee",
-            ),
-            [{
-                "source_type": "",
-                "source_name": "",
-                "source_url": "https://example.gov/not-useful",
-            }],
-        )
 
     def test_marking_source_not_useful_appends_rejected_row(self):
         worksheet = FakeWorksheet()
@@ -182,37 +165,6 @@ class GoogleSheetsTests(unittest.TestCase):
         )
         self.assertEqual(row[-1], "rejected")
         self.assertEqual(value_input_option, "USER_ENTERED")
-
-    def test_restoring_source_updates_only_matching_rejection_status(self):
-        worksheet = FakeWorksheet(records=[
-            {
-                "source_url": "https://example.gov/other",
-                "notes": "rejected_address:123 main st, dandridge, tennessee",
-                "status": "rejected",
-            },
-            {
-                "source_url": "https://example.gov/not-useful",
-                "notes": "rejected_address:123 main st, dandridge, tennessee",
-                "status": "rejected",
-            },
-        ])
-
-        with patch.object(
-            google_sheets,
-            "get_worksheet",
-            return_value=worksheet,
-        ):
-            success, message = google_sheets.restore_rejected_source(
-                source_url="https://example.gov/not-useful",
-                full_address=" 123 MAIN ST, Dandridge, Tennessee ",
-            )
-
-        self.assertTrue(success)
-        self.assertIn("appear again", message)
-        self.assertEqual(
-            worksheet.updated_cell,
-            (3, google_sheets.SOURCE_COLUMNS.index("status") + 1, "restored"),
-        )
 
 
 if __name__ == "__main__":

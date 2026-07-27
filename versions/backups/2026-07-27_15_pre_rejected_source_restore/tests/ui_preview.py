@@ -10,7 +10,6 @@ from modules.ui import (
     display_candidates,
     render_copyable_address,
     render_manual_county_form,
-    render_rejected_sources,
     render_save_source_form,
 )
 
@@ -20,14 +19,8 @@ def preview_save_source(**source):
     return True, f"Preview only: {source['source_name']} was not saved."
 
 
-def preview_restore_source(**source):
-    """Simulate restoring so the preview can never write to Google Sheets."""
-    return True, "Preview only: the source was restored without writing data."
-
-
 ui.save_verified_source = preview_save_source
 ui.save_rejected_source = preview_save_source
-ui.restore_rejected_source = preview_restore_source
 
 if "lookup_result" not in st.session_state:
     st.session_state.lookup_result = {
@@ -39,13 +32,6 @@ if "lookup_result" not in st.session_state:
         ],
         "zoning_candidates": [],
         "setback_candidates": [],
-        "rejected_sources": [
-            {
-                "source_type": "zoning_map",
-                "source_name": "Example hidden zoning result",
-                "source_url": "https://example.gov/hidden-zoning",
-            },
-        ],
     }
 
 st.set_page_config(page_title=f"{APP_TITLE} UI Preview", layout="wide")
@@ -76,10 +62,6 @@ with right_col:
         "Example County",
         "Colorado",
         "parcel_gis",
-        "123 Main St, Example, Colorado",
-    )
-    render_rejected_sources(
-        st.session_state.lookup_result["rejected_sources"],
         "123 Main St, Example, Colorado",
     )
 
