@@ -6,7 +6,6 @@ import json
 
 import streamlit as st
 
-from modules.conditions import discover_condition_sources
 from modules.config import JURISDICTION_LEVELS, SOURCE_TYPES
 from modules.google_sheets import (
     restore_rejected_source,
@@ -347,81 +346,6 @@ def render_rejected_sources(rejected_sources, full_address):
                 )
 
 
-def render_special_conditions_section(result):
-    """Render optional research-source discovery without compliance claims."""
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
-    st.subheader("Special Conditions Source Discovery")
-    st.caption(
-        "Research leads only—not a compliance determination. "
-        "Open each source and verify the parcel before relying on it."
-    )
-
-    button_key = hashlib.sha256(
-        result["full_address"].encode("utf-8")
-    ).hexdigest()[:16]
-    discover_clicked = st.button(
-        (
-            "Refresh Special Conditions Sources"
-            if result.get("condition_sources")
-            else "Discover Special Conditions Sources"
-        ),
-        key=f"discover_conditions_{button_key}",
-        help=(
-            "Search for locality-specific government sources and load "
-            "national screening maps."
-        ),
-    )
-    if discover_clicked:
-        with st.spinner("Finding official condition-research sources..."):
-            result["condition_sources"] = discover_condition_sources(
-                result["city"],
-                result["detected_county"],
-                result["detected_state"],
-            )
-
-    conditions = result.get("condition_sources")
-    if not conditions:
-        st.caption(
-            "Run this optional search after the base GIS lookup when the project "
-            "needs hazard, overlay, or environmental research."
-        )
-        return
-
-    st.markdown("**Possible Special Conditions**")
-    st.caption(
-        "“Source found” means a locality-matching government page was found. "
-        "It does not mean the condition applies to the property."
-    )
-    for condition in conditions:
-        sources = condition.get("sources", [])
-        with st.expander(
-            f"{condition['label']} ({len(sources)})",
-            expanded=False,
-        ):
-            if not sources:
-                st.caption(
-                    "No locality-specific government source was found. "
-                    "Check the planning or permitting department manually."
-                )
-                continue
-
-            for source in sources:
-                safe_name = html.escape(source["source_name"])
-                safe_url = html.escape(source["source_url"], quote=True)
-                safe_status = html.escape(source["status"])
-                safe_scope = html.escape(source["scope"])
-                st.markdown(
-                    (
-                        "<div class='condition-source'>"
-                        f"<span class='condition-status'>{safe_status}</span>"
-                        f"<a href='{safe_url}' target='_blank'>{safe_name}</a>"
-                        f"<div class='condition-scope'>{safe_scope}</div>"
-                        "</div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
-
-
 def render_manual_county_form(pending_lookup):
     """Ask for an optional county without restarting the project lookup."""
     st.info(
@@ -673,26 +597,6 @@ def apply_styles():
             margin-left: 1rem;
             margin-bottom: 0.45rem;
             line-height: 1.45;
-        }
-
-        .condition-source {
-            padding: 0.35rem 0 0.65rem 0;
-        }
-
-        .condition-status {
-            display: inline-block;
-            margin-right: 0.65rem;
-            padding: 0.15rem 0.4rem;
-            border: 1px solid rgba(255, 155, 66, 0.72);
-            border-radius: 4px;
-            font-size: 0.7rem;
-            line-height: 1.2;
-        }
-
-        .condition-scope {
-            margin-top: 0.25rem;
-            opacity: 0.68;
-            font-size: 0.76rem;
         }
 
         div[data-testid="stExpander"] details {

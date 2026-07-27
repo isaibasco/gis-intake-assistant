@@ -28,7 +28,6 @@ from modules.ui import (
     render_manual_county_form,
     render_rejected_sources,
     render_save_source_form,
-    render_special_conditions_section,
 )
 
 
@@ -271,7 +270,6 @@ with left_col:
             result["detected_state"],
             result["city"],
         )
-        render_special_conditions_section(result)
 
 
 with right_col:

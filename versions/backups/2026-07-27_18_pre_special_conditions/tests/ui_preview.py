@@ -12,7 +12,6 @@ from modules.ui import (
     render_manual_county_form,
     render_rejected_sources,
     render_save_source_form,
-    render_special_conditions_section,
 )
 
 
@@ -26,46 +25,12 @@ def preview_restore_source(**source):
     return True, "Preview only: the source was restored without writing data."
 
 
-def preview_condition_sources(city, county, state):
-    """Return deterministic sources so the preview never uses web search."""
-    return [
-        {
-            "key": "flood",
-            "label": "Flood / Floodplain",
-            "sources": [
-                {
-                    "source_name": "Example County Floodplain Map",
-                    "source_url": "https://example.gov/floodplain",
-                    "status": "Source found",
-                    "scope": "Local or state government candidate",
-                },
-                {
-                    "source_name": "FEMA Flood Map Service Center",
-                    "source_url": "https://msc.fema.gov/portal/home",
-                    "status": "Needs verification",
-                    "scope": "National screening source",
-                },
-            ],
-        },
-        {
-            "key": "overlay",
-            "label": "Zoning Overlay District",
-            "sources": [],
-        },
-    ]
-
-
 ui.save_verified_source = preview_save_source
 ui.save_rejected_source = preview_save_source
 ui.restore_rejected_source = preview_restore_source
-ui.discover_condition_sources = preview_condition_sources
 
 if "lookup_result" not in st.session_state:
     st.session_state.lookup_result = {
-        "full_address": "123 Main St, Example, Colorado",
-        "city": "Example",
-        "detected_county": "Example County",
-        "detected_state": "Colorado",
         "general_candidates": [
             {
                 "title": "Example County GIS Result",
@@ -122,4 +87,3 @@ with right_col:
     st.subheader("Save Verified Source")
     st.caption("Preview mode: Save Source is simulated and does not write data.")
     render_save_source_form("Example County", "Colorado", "Example")
-    render_special_conditions_section(st.session_state.lookup_result)
