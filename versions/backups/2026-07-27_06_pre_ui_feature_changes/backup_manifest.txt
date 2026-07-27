@@ -1,0 +1,18 @@
+Backup purpose: Complete modular snapshot before UI feature changes
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Git commit: fdd6e82
+
+Primary files affected by the first feature:
+
+app.py
+SHA256: 7A778AA9D5F756F6034724128EA29305EE89DD51422EEBD72F20C08054A77257
+
+modules/config.py
+SHA256: 5FF7235F36B97412EB8A31D2C7CBC3281282B8F092FBA5423051A2382A439212
+
+modules/ui.py
+SHA256: 6F4FED1987B80A2EEDAC00187E13F82903E742FD1E2F26DD4A3C27350BDF16CF
+
+This folder also contains a complete copy of all current modules and tests.
+Existing unrelated working-tree changes were preserved and are not part of this backup.

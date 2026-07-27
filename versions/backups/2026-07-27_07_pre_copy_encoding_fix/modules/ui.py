@@ -13,12 +13,7 @@ from modules.google_sheets import save_verified_source
 def render_copyable_address(address):
     """Render a selectable address with an always-visible copy button."""
     safe_address = html.escape(address)
-    javascript_address = (
-        json.dumps(address)
-        .replace("<", "\\u003c")
-        .replace(">", "\\u003e")
-        .replace("&", "\\u0026")
-    )
+    javascript_address = json.dumps(address)
 
     components.html(
         f"""

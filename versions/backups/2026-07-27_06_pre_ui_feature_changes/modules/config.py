@@ -1,7 +1,7 @@
 """Central configuration values for the GIS Intake Assistant."""
 
 APP_TITLE = "GIS Intake Assistant"
-APP_TAGLINE = "Find and save property research sources for drafting intake."
+APP_TAGLINE = "Find public GIS, parcel, and zoning sources for drafting intake."
 
 SHEET_NAME = "ED GIS Source Database"
 GIS_SOURCES_TAB = "GIS Sources"

@@ -1,0 +1,7 @@
+Backup purpose: Preserve the first copy-component implementation before tightening JavaScript encoding
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Base Git commit: fdd6e82
+
+modules/ui.py
+SHA256: 56ED43F47D001AD51E45CA07EE86915F86F4669CC6926C4EC2CA7F672AD3B93C

@@ -13,13 +13,7 @@ from modules.search import (
     search_setback_sources,
     search_zoning_sources,
 )
-from modules.ui import (
-    apply_styles,
-    display_candidates,
-    display_saved_sources,
-    render_copyable_address,
-    render_save_source_form,
-)
+from modules.ui import apply_styles, display_candidates, display_saved_sources, render_save_source_form
 
 
 if "lookup_result" not in st.session_state:
@@ -122,8 +116,8 @@ with left_col:
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.subheader("Address to Copy into GIS")
-        render_copyable_address(result["full_address"])
-        st.caption("Use the visible copy button to copy/paste the address into the GIS search bar.")
+        st.code(result["full_address"], language=None)
+        st.caption("Use the copy button on hover to copy/paste the address into the GIS search bar.")
 
         st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
         st.subheader("Suggested Additional Sources")
