@@ -11,10 +11,8 @@ class FakeWorksheet:
     def __init__(self, records=None, headers=None):
         self.records = records or []
         self.headers = headers or list(google_sheets.SOURCE_COLUMNS)
-        self.col_count = len(self.headers)
         self.appended_rows = []
         self.updated_cells = []
-        self.resized_to = None
 
     def get_all_records(self):
         return self.records
@@ -30,10 +28,6 @@ class FakeWorksheet:
         self.updated_cells.append((row, column, value))
         if row == 1 and column == len(self.headers) + 1:
             self.headers.append(value)
-
-    def resize(self, cols):
-        self.col_count = cols
-        self.resized_to = cols
 
 
 class GoogleSheetsTests(unittest.TestCase):
@@ -310,7 +304,6 @@ class GoogleSheetsTests(unittest.TestCase):
             worksheet.headers,
             google_sheets.SOURCE_COLUMNS,
         )
-        self.assertEqual(worksheet.resized_to, len(google_sheets.SOURCE_COLUMNS))
         row, _ = worksheet.appended_rows[0]
         self.assertEqual(
             row[worksheet.headers.index("city")],

@@ -56,18 +56,12 @@ def ensure_source_schema(worksheet):
     """Append optional source columns without reordering existing sheet data."""
     headers = [str(header).strip() for header in worksheet.row_values(1)]
     normalized_headers = [header.lower() for header in headers]
-    missing_columns = [
-        column for column in SOURCE_COLUMNS
-        if column not in normalized_headers
-    ]
-    required_column_count = len(headers) + len(missing_columns)
 
-    if worksheet.col_count < required_column_count:
-        worksheet.resize(cols=required_column_count)
-
-    for column in missing_columns:
-        worksheet.update_cell(1, len(headers) + 1, column)
-        headers.append(column)
+    for column in SOURCE_COLUMNS:
+        if column not in normalized_headers:
+            worksheet.update_cell(1, len(headers) + 1, column)
+            headers.append(column)
+            normalized_headers.append(column)
 
     return headers
 

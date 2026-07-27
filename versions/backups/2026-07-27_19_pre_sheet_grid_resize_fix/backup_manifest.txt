@@ -1,0 +1,5 @@
+Backup purpose: before expanding the live Sheet grid for optional schema columns
+Base commit: ce908750f3142165f87a1b041340cb001ff59ab7
+
+modules\google_sheets.py=F590946B15D24217F735077A6C918ABC321409AAF75AF8CD82A191D3C02795AA
+tests\test_google_sheets.py=89F1E21C3EF5B374DADA019EA65F49EC45105B8750DD6D523817EC321E011939
