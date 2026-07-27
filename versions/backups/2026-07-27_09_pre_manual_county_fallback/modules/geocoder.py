@@ -60,25 +60,3 @@ def lookup_location(full_address, entered_state, geolocator=None):
         "used_fallback": True,
         "warning": "",
     }
-
-
-def finalize_location_result(location_result, manual_county=""):
-    """Apply an optional manual county and assign the matching log status."""
-    result = dict(location_result)
-    manual_county = manual_county.strip()
-
-    if result.get("county", "").strip():
-        result["county_source"] = "automatic"
-        result["lookup_status"] = "completed_lookup"
-    elif manual_county:
-        result["county"] = manual_county
-        result["county_source"] = "user_provided"
-        result["lookup_status"] = "completed_lookup_manual_county"
-        result["used_fallback"] = True
-    else:
-        result["county"] = ""
-        result["county_source"] = "unavailable"
-        result["lookup_status"] = "completed_lookup_city_state_fallback"
-        result["used_fallback"] = True
-
-    return result

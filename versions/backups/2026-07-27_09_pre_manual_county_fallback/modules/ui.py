@@ -171,25 +171,6 @@ def display_candidates(candidates):
         st.caption("No high-confidence suggestions found. Use fallback search if needed.")
 
 
-def render_manual_county_form(pending_lookup):
-    """Ask for an optional county without restarting the project lookup."""
-    st.info(
-        "Automatic county detection is unavailable. "
-        "Enter the county if known, or continue without it."
-    )
-    st.caption(f"Project retained: {pending_lookup['full_address']}")
-
-    with st.form("manual_county_form"):
-        manual_county = st.text_input(
-            "County (optional)",
-            placeholder="Example: Jefferson County",
-            key="manual_county_input",
-        )
-        continue_search = st.form_submit_button("Continue Search")
-
-    return manual_county, continue_search
-
-
 def _handle_source_url_change():
     source_url = st.session_state.get("save_source_url", "").strip()
     current_name = st.session_state.get("save_source_name", "").strip()

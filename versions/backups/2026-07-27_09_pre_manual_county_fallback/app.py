@@ -5,7 +5,7 @@ from modules.config import (
     APP_TAGLINE,
     APP_TITLE,
 )
-from modules.geocoder import finalize_location_result, lookup_location
+from modules.geocoder import lookup_location
 from modules.google_sheets import load_gis_portals, log_search
 from modules.search import (
     remove_saved_duplicates,
@@ -18,75 +18,12 @@ from modules.ui import (
     display_candidates,
     display_saved_sources,
     render_copyable_address,
-    render_manual_county_form,
     render_save_source_form,
 )
 
 
-def complete_lookup(full_address, city, location_result):
-    """Load saved sources, discover candidates, and log one completed lookup."""
-    detected_county = location_result["county"]
-    detected_state = location_result["state"]
-    county_key = detected_county.strip().lower()
-    state_key = detected_state.strip().lower()
-
-    gis_df = load_gis_portals()
-    if county_key:
-        match = gis_df[
-            (gis_df["county"] == county_key)
-            & (gis_df["state"] == state_key)
-        ]
-    else:
-        match = pd.DataFrame(columns=gis_df.columns)
-
-    with st.spinner("Checking saved sources and discovering additional sources..."):
-        general_candidates = search_general_sources(city, detected_county, detected_state)
-        zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
-        setback_candidates = search_setback_sources(city, detected_county, detected_state)
-
-        general_candidates = remove_saved_duplicates(general_candidates, match)
-        zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
-        setback_candidates = remove_saved_duplicates(setback_candidates, match)
-
-    saved_count = len(match) if not match.empty else 0
-    suggested_count = (
-        len(general_candidates)
-        + len(zoning_candidates)
-        + len(setback_candidates)
-    )
-
-    result = {
-        "full_address": full_address,
-        "confirmed_address": location_result["confirmed_address"],
-        "city": city,
-        "detected_county": detected_county,
-        "detected_state": detected_state,
-        "county_source": location_result["county_source"],
-        "lookup_status": location_result["lookup_status"],
-        "match": match,
-        "general_candidates": general_candidates,
-        "zoning_candidates": zoning_candidates,
-        "setback_candidates": setback_candidates,
-        "saved_count": saved_count,
-        "suggested_count": suggested_count,
-    }
-
-    log_search(
-        entered_address=full_address,
-        confirmed_address=location_result["confirmed_address"],
-        detected_county=detected_county,
-        detected_state=detected_state,
-        result_type=location_result["lookup_status"],
-        saved_source_count=saved_count,
-        suggested_results_count=suggested_count,
-    )
-    return result
-
-
 if "lookup_result" not in st.session_state:
     st.session_state.lookup_result = None
-if "pending_lookup" not in st.session_state:
-    st.session_state.pending_lookup = None
 
 
 st.set_page_config(page_title="GIS Intake Assistant", layout="wide")
@@ -108,8 +45,6 @@ with left_col:
 
     if lookup_submitted:
         full_address = f"{project_address}, {city}, {state}"
-        st.session_state.pending_lookup = None
-        st.session_state.pop("manual_county_input", None)
 
         if not project_address or not city or not state:
             st.error("Please enter the project address, city, and state.")
@@ -119,48 +54,61 @@ with left_col:
                 with st.spinner("Searching public location data..."):
                     location_result = lookup_location(full_address, state)
 
+                geocoder_fallback = location_result["used_fallback"]
+                confirmed_address = location_result["confirmed_address"]
                 detected_county = location_result["county"]
+                detected_state = location_result["state"]
 
                 if location_result["warning"]:
                     st.warning(location_result["warning"])
 
-                if detected_county.strip():
-                    location_result = finalize_location_result(location_result)
-                    st.session_state.lookup_result = complete_lookup(
-                        full_address,
-                        city,
-                        location_result,
-                    )
+                county_key = detected_county.strip().lower()
+                state_key = detected_state.strip().lower()
+
+                gis_df = load_gis_portals()
+                if county_key:
+                    match = gis_df[
+                        (gis_df["county"] == county_key)
+                        & (gis_df["state"] == state_key)
+                    ]
                 else:
-                    st.session_state.lookup_result = None
-                    st.session_state.pending_lookup = {
-                        "full_address": full_address,
-                        "city": city,
-                        "state": state,
-                        "location_result": location_result,
-                    }
+                    match = pd.DataFrame(columns=gis_df.columns)
 
-            except Exception as error:
-                st.error(f"Lookup failed: {error}")
-                st.session_state.lookup_result = None
-                st.session_state.pending_lookup = None
+                with st.spinner("Checking saved sources and discovering additional sources..."):
+                    general_candidates = search_general_sources(city, detected_county, detected_state)
+                    zoning_candidates = search_zoning_sources(city, detected_county, detected_state)
+                    setback_candidates = search_setback_sources(city, detected_county, detected_state)
 
-    pending_lookup = st.session_state.pending_lookup
-    if pending_lookup:
-        manual_county, continue_search = render_manual_county_form(pending_lookup)
+                    general_candidates = remove_saved_duplicates(general_candidates, match)
+                    zoning_candidates = remove_saved_duplicates(zoning_candidates, match)
+                    setback_candidates = remove_saved_duplicates(setback_candidates, match)
 
-        if continue_search:
-            try:
-                location_result = finalize_location_result(
-                    pending_lookup["location_result"],
-                    manual_county=manual_county,
+                saved_count = len(match) if not match.empty else 0
+                suggested_count = len(general_candidates) + len(zoning_candidates) + len(setback_candidates)
+
+                st.session_state.lookup_result = {
+                    "full_address": full_address,
+                    "confirmed_address": confirmed_address,
+                    "detected_county": detected_county,
+                    "detected_state": detected_state,
+                    "match": match,
+                    "general_candidates": general_candidates,
+                    "zoning_candidates": zoning_candidates,
+                    "setback_candidates": setback_candidates,
+                    "saved_count": saved_count,
+                    "suggested_count": suggested_count,
+                }
+
+                log_search(
+                    entered_address=full_address,
+                    confirmed_address=confirmed_address,
+                    detected_county=detected_county,
+                    detected_state=detected_state,
+                    result_type="completed_lookup_city_state_fallback" if geocoder_fallback else "completed_lookup",
+                    saved_source_count=saved_count,
+                    suggested_results_count=suggested_count,
                 )
-                st.session_state.lookup_result = complete_lookup(
-                    pending_lookup["full_address"],
-                    pending_lookup["city"],
-                    location_result,
-                )
-                st.session_state.pending_lookup = None
+
             except Exception as error:
                 st.error(f"Lookup failed: {error}")
                 st.session_state.lookup_result = None
@@ -219,13 +167,8 @@ with right_col:
     st.subheader("Detected Area")
 
     if result:
-        county_display = result["detected_county"] or "Not provided"
-        if result.get("county_source") == "user_provided":
-            county_display = f"{county_display} (user-provided)"
-        st.write(f"County: {county_display}")
+        st.write(f"County: {result['detected_county']}")
         st.write(f"State: {result['detected_state']}")
-    elif st.session_state.pending_lookup:
-        st.caption("County detection is awaiting optional user input.")
     else:
         st.caption("Run a lookup to detect county and state.")
 

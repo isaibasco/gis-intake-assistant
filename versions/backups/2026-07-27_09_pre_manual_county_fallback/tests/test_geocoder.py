@@ -5,7 +5,6 @@ from geopy.exc import GeocoderRateLimited, GeocoderTimedOut
 from modules.geocoder import (
     RATE_LIMIT_WARNING,
     SERVICE_UNAVAILABLE_WARNING,
-    finalize_location_result,
     lookup_location,
 )
 
@@ -82,44 +81,6 @@ class LookupLocationTests(unittest.TestCase):
         self.assertEqual(result["state"], "Colorado")
         self.assertTrue(result["used_fallback"])
         self.assertEqual(result["warning"], "")
-
-    def test_automatic_county_receives_completed_status(self):
-        result = finalize_location_result({
-            "county": "Jefferson County",
-            "state": "Tennessee",
-            "used_fallback": False,
-        })
-
-        self.assertEqual(result["county_source"], "automatic")
-        self.assertEqual(result["lookup_status"], "completed_lookup")
-
-    def test_manual_county_is_labeled_and_logged_separately(self):
-        result = finalize_location_result(
-            {
-                "county": "",
-                "state": "Tennessee",
-                "used_fallback": True,
-            },
-            manual_county=" Jefferson County ",
-        )
-
-        self.assertEqual(result["county"], "Jefferson County")
-        self.assertEqual(result["county_source"], "user_provided")
-        self.assertEqual(result["lookup_status"], "completed_lookup_manual_county")
-
-    def test_blank_manual_county_keeps_city_state_fallback(self):
-        result = finalize_location_result({
-            "county": "",
-            "state": "Tennessee",
-            "used_fallback": True,
-        })
-
-        self.assertEqual(result["county"], "")
-        self.assertEqual(result["county_source"], "unavailable")
-        self.assertEqual(
-            result["lookup_status"],
-            "completed_lookup_city_state_fallback",
-        )
 
 
 if __name__ == "__main__":
