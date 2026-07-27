@@ -8,7 +8,6 @@ import streamlit.components.v1 as components
 
 from modules.config import SOURCE_TYPES
 from modules.google_sheets import save_verified_source
-from modules.source_names import suggest_source_name
 
 
 def render_copyable_address(address):
@@ -171,110 +170,52 @@ def display_candidates(candidates):
         st.caption("No high-confidence suggestions found. Use fallback search if needed.")
 
 
-def _handle_source_url_change():
-    source_url = st.session_state.get("save_source_url", "").strip()
-    current_name = st.session_state.get("save_source_name", "").strip()
-    previous_suggestion = st.session_state.get("last_auto_source_name", "")
-
-    if not source_url:
-        st.session_state["source_name_suggestion_status"] = ""
-        return
-
-    if current_name and current_name != previous_suggestion:
-        st.session_state["source_name_suggestion_status"] = (
-            "The source name was left unchanged because you edited it."
-        )
-        return
-
-    suggestion = suggest_source_name(source_url)
-    if suggestion:
-        st.session_state["save_source_name"] = suggestion
-        st.session_state["last_auto_source_name"] = suggestion
-        st.session_state["source_name_suggestion_status"] = (
-            "Suggested from the source URL. Review or edit before saving."
-        )
-
-
-def _save_source(detected_county, detected_state):
-    source_type = st.session_state.get("save_source_type", SOURCE_TYPES[0])
-    source_name = st.session_state.get("save_source_name", "").strip()
-    source_url = st.session_state.get("save_source_url", "").strip()
-    notes = st.session_state.get("save_source_notes", "").strip()
-
-    if not source_name or not source_url:
-        st.session_state["save_source_feedback"] = (
-            "error",
-            "Please enter both source name and source URL.",
-        )
-        return
-
-    saved, message = save_verified_source(
-        county=detected_county,
-        state=detected_state,
-        source_type=source_type,
-        source_name=source_name,
-        source_url=source_url,
-        notes=notes,
-    )
-    st.session_state["save_source_feedback"] = (
-        "success" if saved else "warning",
-        message,
-    )
-
-    if saved:
-        st.session_state["save_source_type"] = SOURCE_TYPES[0]
-        st.session_state["save_source_name"] = ""
-        st.session_state["save_source_url"] = ""
-        st.session_state["save_source_notes"] = ""
-        st.session_state["last_auto_source_name"] = ""
-        st.session_state["source_name_suggestion_status"] = ""
-
-
 def render_save_source_form(detected_county, detected_state):
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
     with st.expander("＋ Save verified source", expanded=False):
         st.caption("Save only after confirming the link is official and useful.")
 
-        feedback = st.session_state.pop("save_source_feedback", None)
-        if feedback:
-            feedback_type, message = feedback
-            getattr(st, feedback_type)(message)
+        with st.form("save_verified_source_form", clear_on_submit=True):
+            source_type = st.selectbox(
+                "Source Type",
+                SOURCE_TYPES,
+            )
 
-        st.selectbox(
-            "Source Type",
-            SOURCE_TYPES,
-            key="save_source_type",
-        )
+            source_name = st.text_input(
+                "Source Name",
+                placeholder="Example: Lexington County GIS Viewer",
+            )
 
-        st.text_input(
-            "Source URL",
-            placeholder="Paste verified source URL here",
-            key="save_source_url",
-            on_change=_handle_source_url_change,
-        )
+            source_url = st.text_input(
+                "Source URL",
+                placeholder="Paste verified source URL here",
+            )
 
-        st.text_input(
-            "Source Name",
-            placeholder="Suggested automatically after you paste a URL",
-            key="save_source_name",
-        )
+            notes = st.text_input(
+                "Notes",
+                placeholder="Optional. Example: Official zoning PDF / parcel viewer / assessor search",
+            )
 
-        suggestion_status = st.session_state.get("source_name_suggestion_status", "")
-        if suggestion_status:
-            st.caption(suggestion_status)
+            submitted = st.form_submit_button("Save Source")
 
-        st.text_input(
-            "Notes",
-            placeholder="Optional. Example: Official zoning PDF / parcel viewer / assessor search",
-            key="save_source_notes",
-        )
+            if submitted:
+                if not source_name or not source_url:
+                    st.error("Please enter both source name and source URL.")
+                else:
+                    saved, message = save_verified_source(
+                        county=detected_county,
+                        state=detected_state,
+                        source_type=source_type,
+                        source_name=source_name,
+                        source_url=source_url,
+                        notes=notes,
+                    )
 
-        st.button(
-            "Save Source",
-            on_click=_save_source,
-            args=(detected_county, detected_state),
-        )
+                    if saved:
+                        st.success(message)
+                    else:
+                        st.warning(message)
 
 
 def apply_styles():

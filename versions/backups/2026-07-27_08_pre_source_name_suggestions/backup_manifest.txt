@@ -1,0 +1,7 @@
+Backup purpose: Preserve the UI module before adding automatic source-name suggestions
+Created: 2026-07-27
+Git branch: refactor/v0.3
+Git commit: 5cca166
+
+modules/ui.py
+SHA256: 054EBF44973FA14B33E9415E40093C25E9B80C40DB09BD750C06794E389F0EEB
