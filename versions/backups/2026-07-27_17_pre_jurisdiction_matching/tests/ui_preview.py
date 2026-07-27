@@ -86,4 +86,4 @@ with right_col:
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
     st.subheader("Save Verified Source")
     st.caption("Preview mode: Save Source is simulated and does not write data.")
-    render_save_source_form("Example County", "Colorado", "Example")
+    render_save_source_form("Example County", "Colorado")

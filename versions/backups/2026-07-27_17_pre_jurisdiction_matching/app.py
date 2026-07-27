@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 from modules.config import (
@@ -9,7 +10,6 @@ from modules.google_sheets import (
     filter_active_sources,
     load_source_database,
     log_search,
-    match_sources_for_location,
     rejected_sources_for_address,
     rejected_urls_for_address,
 )
@@ -35,6 +35,9 @@ def complete_lookup(full_address, city, location_result):
     """Load saved sources, discover candidates, and log one completed lookup."""
     detected_county = location_result["county"]
     detected_state = location_result["state"]
+    county_key = detected_county.strip().lower()
+    state_key = detected_state.strip().lower()
+
     source_database = load_source_database()
     gis_df = filter_active_sources(source_database)
     rejected_sources = rejected_sources_for_address(
@@ -45,12 +48,13 @@ def complete_lookup(full_address, city, location_result):
         source_database,
         full_address,
     )
-    match = match_sources_for_location(
-        gis_df,
-        city=city,
-        county=detected_county,
-        state=detected_state,
-    )
+    if county_key:
+        match = gis_df[
+            (gis_df["county"] == county_key)
+            & (gis_df["state"] == state_key)
+        ]
+    else:
+        match = pd.DataFrame(columns=gis_df.columns)
 
     with st.spinner("Checking saved sources and discovering additional sources..."):
         general_candidates = search_general_sources(city, detected_county, detected_state)
@@ -265,11 +269,7 @@ with left_col:
             result.get("rejected_sources", []),
             result["full_address"],
         )
-        render_save_source_form(
-            result["detected_county"],
-            result["detected_state"],
-            result["city"],
-        )
+        render_save_source_form(result["detected_county"], result["detected_state"])
 
 
 with right_col:
@@ -279,7 +279,6 @@ with right_col:
         county_display = result["detected_county"] or "Not provided"
         if result.get("county_source") == "user_provided":
             county_display = f"{county_display} (user-provided)"
-        st.write(f"City: {result['city']}")
         st.write(f"County: {county_display}")
         st.write(f"State: {result['detected_state']}")
     elif st.session_state.pending_lookup:

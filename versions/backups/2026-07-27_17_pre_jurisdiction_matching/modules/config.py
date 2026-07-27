@@ -20,11 +20,3 @@ SOURCE_TYPES = [
     "setback_reference",
     "other",
 ]
-
-JURISDICTION_LEVELS = [
-    "county",
-    "city",
-    "state",
-    "regional",
-    "unknown",
-]

@@ -6,7 +6,7 @@ import json
 
 import streamlit as st
 
-from modules.config import JURISDICTION_LEVELS, SOURCE_TYPES
+from modules.config import SOURCE_TYPES
 from modules.google_sheets import (
     restore_rejected_source,
     save_rejected_source,
@@ -389,12 +389,8 @@ def _handle_source_url_change():
         )
 
 
-def _save_source(detected_county, detected_state, city):
+def _save_source(detected_county, detected_state):
     source_type = st.session_state.get("save_source_type", SOURCE_TYPES[0])
-    jurisdiction_level = st.session_state.get(
-        "save_source_jurisdiction_level",
-        "county" if detected_county.strip() else "city",
-    )
     source_name = st.session_state.get("save_source_name", "").strip()
     source_url = st.session_state.get("save_source_url", "").strip()
     notes = st.session_state.get("save_source_notes", "").strip()
@@ -413,8 +409,6 @@ def _save_source(detected_county, detected_state, city):
         source_name=source_name,
         source_url=source_url,
         notes=notes,
-        city=city,
-        jurisdiction_level=jurisdiction_level,
     )
     st.session_state["save_source_feedback"] = (
         "success" if saved else "warning",
@@ -430,14 +424,11 @@ def _save_source(detected_county, detected_state, city):
         st.session_state["source_name_suggestion_status"] = ""
 
 
-def render_save_source_form(detected_county, detected_state, city=""):
+def render_save_source_form(detected_county, detected_state):
     st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
     with st.expander("＋ Save verified source", expanded=False):
         st.caption("Save only after confirming the link is official and useful.")
-        default_level = "county" if detected_county.strip() else "city"
-        if "save_source_jurisdiction_level" not in st.session_state:
-            st.session_state["save_source_jurisdiction_level"] = default_level
 
         feedback = st.session_state.pop("save_source_feedback", None)
         if feedback:
@@ -449,20 +440,6 @@ def render_save_source_form(detected_county, detected_state, city=""):
             SOURCE_TYPES,
             key="save_source_type",
         )
-
-        st.selectbox(
-            "Jurisdiction Level",
-            JURISDICTION_LEVELS,
-            key="save_source_jurisdiction_level",
-            help=(
-                "Controls when this source is reused: exact county, exact city, "
-                "the whole state, a regional area, or an unknown scope."
-            ),
-        )
-        location_parts = [
-            part for part in (city, detected_county, detected_state) if part
-        ]
-        st.caption(f"Saved location: {', '.join(location_parts)}")
 
         st.text_input(
             "Source URL",
@@ -490,7 +467,7 @@ def render_save_source_form(detected_county, detected_state, city=""):
         st.button(
             "Save Source",
             on_click=_save_source,
-            args=(detected_county, detected_state, city),
+            args=(detected_county, detected_state),
         )
 
 
